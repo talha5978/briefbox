@@ -1,0 +1,50 @@
+# Turbo
+.turbo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+/node_modules
+**/node_modules
+.pnpm-store
+
+# Build outputs
+**/dist
+**/build
+**/.next
+**/.react-router
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime
+pids
+*.pid
+*.seed
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Temporary
+tmp/
+temp/
+*.tsbuildinfo
+
+# Misc
+stats.html
+.cache
+*.sqlite
+*.db

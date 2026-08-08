@@ -1,0 +1,33 @@
+{
+	"name": "briefbox",
+	"version": "1.0.0",
+	"description": "",
+	"scripts": {
+		"dev": "dotenv -- turbo run dev",
+		"build": "dotenv -- turbo run build",
+		"start": "dotenv -- turbo run start",
+		"backend:dev": "dotenv -- turbo run dev --filter=@workspace/backend",
+		"backend:build": "dotenv -- turbo run build --filter=@workspace/backend",
+		"backend:start": "dotenv -- turbo run start --filter=@workspace/backend",
+		"web:dev": "dotenv -- turbo run dev --filter=@workspace/web",
+		"web:build": "dotenv -- turbo run build --filter=@workspace/web",
+		"web:start": "dotenv -- turbo run start --filter=@workspace/web",
+		"format": "prettier . --write \"**/*.{js,ts,tsx,jsx,json,md,css,scss,yaml}\"",
+		"ws:add": "node scripts/add-package.js"
+	},
+	"lint-staged": {
+		"*.{js,ts,tsx,jsx,json,md,css,scss,yaml}": "prettier --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@11.1.1",
+	"type": "module",
+	"devDependencies": {
+		"dotenv-cli": "^11.0.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.3.0",
+		"prettier": "^3.9.6",
+		"turbo": "^2.10.8"
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"globalEnv": ["NODE_ENV", "VITE_ENV", "BACKEND_PORT", "WEB_URL", "API_BASE_URL"],
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": [".react-router/**", "dist/**", "build/**"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"start": {
+			"cache": false,
+			"persistent": true
+		},
+		"format": {
+			"cache": false
+		}
+	}
+}

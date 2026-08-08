@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"incremental": true,
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"paths": {
+			// "@workspace/auth": ["./packages/auth/src/index.ts"]
+		}
+	},
+	"exclude": ["node_modules", "dist", "build"]
+}
