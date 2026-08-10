@@ -5,6 +5,7 @@ import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import csrf from "@fastify/csrf-protection";
+import rateLimit from "@fastify/rate-limit";
 import sessionRoutes from "~/routes/session.routes";
 import emailRoutes from "~/routes/email.routes";
 import { webhookRoutes } from "~/routes/webhook";
@@ -30,6 +31,29 @@ export async function server(fastify: FastifyInstance) {
 			},
 		},
 		crossOriginEmbedderPolicy: false,
+	});
+
+	await fastify.register(rateLimit, {
+		global: true,
+		max: 100,
+		timeWindow: "1 minute",
+		hook: "onRequest",
+		keyGenerator: (request) => {
+			return (
+				(request.headers["cf-connecting-ip"] as string) ||
+				(request.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+				request.ip
+			);
+		},
+		errorResponseBuilder: (_request, context) => {
+			return {
+				success: false,
+				error: {
+					code: "RATE_LIMITED",
+					message: `Too many requests. Retry in ${Math.ceil(context.ttl / 1000)}s`,
+				},
+			};
+		},
 	});
 
 	await fastify.register(csrf, {
