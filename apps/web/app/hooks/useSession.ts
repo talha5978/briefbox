@@ -5,5 +5,6 @@ export default function useSession() {
 	const rootLoaderData = useRouteLoaderData<typeof loader>("root");
 	return {
 		session: rootLoaderData?.session ?? null,
+		isNewSession: rootLoaderData?.isNewSession ?? false,
 	};
 }

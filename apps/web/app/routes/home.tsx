@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
-import { RefreshCw, Inbox, Copy, Check, ShieldCheck, ShieldAlert, ShieldX, Clock } from "lucide-react";
+import {
+	RefreshCw,
+	Inbox,
+	Copy,
+	Check,
+	ShieldCheck,
+	ShieldAlert,
+	ShieldX,
+	Clock,
+	X,
+	Info,
+} from "lucide-react";
 import useSession from "~/hooks/useSession";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -17,14 +28,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Home() {
-	const { session } = useSession();
+	const { session, isNewSession } = useSession();
 	const revalidator = useRevalidator();
 	const [copied, setCopied] = useState(false);
+	const [bannerDismissed, setBannerDismissed] = useState(false);
 	const { emailsData } = useLoaderData<typeof loader>();
 	const emails = emailsData.emails ?? [];
 	const emailAddress = session?.email;
 
 	const [timeLeft, setTimeLeft] = useState<number>(0);
+
+	const showBanner = Boolean(isNewSession) && !bannerDismissed;
 
 	useEffect(() => {
 		if (!session?.expiresAt) return;
@@ -49,7 +63,7 @@ export default function Home() {
 		const id = setInterval(() => {
 			if (document.hidden) return;
 			if (revalidator.state === "loading") return;
-			// revalidator.revalidate();
+			revalidator.revalidate();
 		}, 10000);
 
 		return () => clearInterval(id);
@@ -118,6 +132,26 @@ export default function Home() {
 					</div>
 					<p className="text-sm text-muted-foreground">Temporary email. Dies in one hour.</p>
 				</header>
+
+				{/* Session Renewed Banner */}
+				{showBanner && (
+					<div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/50 px-3.5 py-2.5 text-xs text-muted-foreground">
+						<div className="flex items-center gap-2">
+							<Info className="w-4 h-4 text-primary shrink-0" />
+							<span>
+								Your session expired. A new temporary email address has been assigned.
+							</span>
+						</div>
+						<button
+							type="button"
+							onClick={() => setBannerDismissed(true)}
+							className="p-1 hover:text-foreground transition-colors cursor-pointer shrink-0"
+							aria-label="Dismiss banner"
+						>
+							<X className="w-3.5 h-3.5" />
+						</button>
+					</div>
+				)}
 
 				{/* Address */}
 				<section className="mb-8">

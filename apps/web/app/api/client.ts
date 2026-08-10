@@ -1,5 +1,6 @@
 import type { IncomingEmail } from "~/types/email";
 import type { ApiResponse } from "~/types/response";
+import type { SessionData } from "~/types/session";
 
 const API_BASE = (process.env.API_BASE_URL || "http://localhost:4000") + "/api";
 
@@ -50,11 +51,8 @@ export function createApiClient(cookie?: string) {
 	return {
 		getSession: () =>
 			request<{
-				email: string;
-				sessionId: string;
-				createdAt: number;
-				expiresAt: number;
-				remainingSeconds: number;
+				session: SessionData;
+				isNewSession: boolean;
 			}>("/session"),
 
 		getEmails: () =>

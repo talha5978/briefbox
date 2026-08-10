@@ -15,11 +15,14 @@ const sessionRoutes: FastifyPluginAsync = async (fastify) => {
 		}
 
 		return reply.success({
-			email: session.email,
-			sessionId: session.sessionId,
-			createdAt: session.createdAt,
-			expiresAt: session.expiresAt,
-			remainingSeconds: getRemainingSeconds(session),
+			session: {
+				email: session.email,
+				sessionId: session.sessionId,
+				createdAt: session.createdAt,
+				expiresAt: session.expiresAt,
+				remainingSeconds: getRemainingSeconds(session),
+			},
+			isNewSession: request.isNewSession,
 		});
 	});
 };

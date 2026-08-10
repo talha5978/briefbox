@@ -27,10 +27,9 @@ export const meta = () => {
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
 	const api = createApiClientFromRequest(request);
-	const session = await api.getSession();
-	console.log("session", session);
+	const sessionData = await api.getSession();
 
-	return withCookies(api, { session });
+	return withCookies(api, { session: sessionData.session, isNewSession: sessionData.isNewSession });
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {

@@ -8,5 +8,6 @@ declare module "fastify" {
 
 	interface FastifyRequest {
 		session: SessionData | null;
+		isNewSession: boolean;
 	}
 }
