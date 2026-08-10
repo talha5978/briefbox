@@ -1,9 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import errorHandlerPlugin from "~/plugins/error-handler";
+import sessionPlugin from "~/plugins/session";
 import fastifyCookie from "@fastify/cookie";
 import fastifyCors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import csrf from "@fastify/csrf-protection";
+import sessionRoutes from "~/routes/session.routes";
+import emailRoutes from "~/routes/email.routes";
+import { webhookRoutes } from "~/routes/webhook";
 
 export async function server(fastify: FastifyInstance) {
 	await fastify.register(errorHandlerPlugin);
@@ -34,5 +38,14 @@ export async function server(fastify: FastifyInstance) {
 
 	await fastify.register(fastifyCookie);
 
+	await fastify.register(sessionPlugin);
+
 	// await fastify.register(emailRoutes, { prefix: "/api/email" });
+	await fastify.register(sessionRoutes, { prefix: "/api/session" });
+	await fastify.register(emailRoutes, { prefix: "/api/emails" });
+	await fastify.register(webhookRoutes, { prefix: "/api/webhook" });
+
+	await fastify.get("/api/health", async () => {
+		return { status: "ok" };
+	});
 }

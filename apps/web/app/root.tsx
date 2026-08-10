@@ -2,6 +2,8 @@ import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration }
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { createApiClientFromRequest } from "~/api/client";
+import { withCookies } from "~/api/with-cookies";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -15,6 +17,21 @@ export const links: Route.LinksFunction = () => [
 		href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
 	},
 ];
+
+export const meta = () => {
+	return [
+		{ title: "Briefbox - Temporary Email Service" },
+		{ name: "description", content: "Temporary email service for testing and privacy." },
+	];
+};
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+	const api = createApiClientFromRequest(request);
+	const session = await api.getSession();
+	console.log("session", session);
+
+	return withCookies(api, { session });
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
 	return (
