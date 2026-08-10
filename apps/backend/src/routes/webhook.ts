@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import { simpleParser } from "mailparser";
 import { cache } from "~/lib/cache";
 import { EmailService } from "~/services/email.service";
 import { ApiError } from "~/utils/ApiError";
@@ -20,37 +21,35 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
 		}
 
 		const { from, to, subject, raw } = request.body;
-		console.log(request.body);
 
 		if (!to || !from) {
 			throw new ApiError("Missing from/to", 400, "BAD_REQUEST");
 		}
 
-		// Find which session owns this temporary address
 		const sessionId = await cache.get<string>(cache.KEYS.emailToSession(to.toLowerCase()));
 
 		if (!sessionId) {
-			// Unknown address – just ignore (or log)
 			return reply.success({ stored: false, reason: "unknown_address" });
 		}
 
-		// For now we store the raw content and a simple text version
-		const text = extractTextFromRaw(raw);
+		// Parse full MIME email
+		const parsed = await simpleParser(raw);
 
-		// Extract links (simple regex for MVP)
-		const links = extractLinks(text + " " + (raw || ""));
+		const text = parsed.text?.trim() || "";
+		const html = typeof parsed.html === "string" ? parsed.html : undefined;
 
-		// Basic risk score
+		const links = extractLinks([text, html, raw].filter(Boolean).join(" "));
+
+		// MVP risk scoring
 		const riskScore = 0;
 		const riskLevel = "safe" as const;
 
-		// Store the email
 		const email = await EmailService.store(sessionId, {
-			from,
+			from: parsed.from?.text || from,
 			to,
-			subject: subject || "(no subject)",
-			text,
-			html: undefined,
+			subject: parsed.subject || subject || "(no subject)",
+			text: text || stripHtml(html || ""),
+			html,
 			links,
 			riskScore,
 			riskLevel,
@@ -60,17 +59,17 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
 	});
 };
 
-function extractTextFromRaw(raw: string): string {
-	// A real solution should use a proper MIME parser (mailparser)
-	const match = raw.match(
-		/Content-Type: text\/plain[\s\S]*?\r?\n\r?\n([\s\S]*?)(?=\r?\n--|\r?\nContent-Type:|$)/i,
-	);
-	if (match?.[1]) return match[1].trim();
-	return raw.slice(0, 2000);
-}
-
 function extractLinks(content: string): string[] {
 	const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
 	const matches = content.match(urlRegex) || [];
 	return [...new Set(matches)];
+}
+
+function stripHtml(html: string): string {
+	return html
+		.replace(/<style[\s\S]*?<\/style>/gi, "")
+		.replace(/<script[\s\S]*?<\/script>/gi, "")
+		.replace(/<[^>]+>/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
 }

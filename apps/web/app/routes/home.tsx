@@ -8,6 +8,7 @@ import { createApiClientFromRequest } from "~/api/client";
 import type { LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
 import { useRevalidator } from "react-router";
+import DOMPurify from "dompurify";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const api = createApiClientFromRequest(request);
@@ -48,7 +49,7 @@ export default function Home() {
 		const id = setInterval(() => {
 			if (document.hidden) return;
 			if (revalidator.state === "loading") return;
-			revalidator.revalidate();
+			// revalidator.revalidate();
 		}, 10000);
 
 		return () => clearInterval(id);
@@ -84,21 +85,21 @@ export default function Home() {
 				return (
 					<span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
 						<ShieldCheck className="w-3 h-3" />
-						safe
+						Safe
 					</span>
 				);
 			case "warning":
 				return (
 					<span className="inline-flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
 						<ShieldAlert className="w-3 h-3" />
-						suspicious
+						Suspicious
 					</span>
 				);
 			case "dangerous":
 				return (
 					<span className="inline-flex items-center gap-1 text-[11px] text-red-600 dark:text-red-400">
 						<ShieldX className="w-3 h-3" />
-						dangerous
+						Dangerous
 					</span>
 				);
 			default:
@@ -210,14 +211,25 @@ export default function Home() {
 									<AccordionContent className="px-4 pb-4">
 										<div className="text-xs text-muted-foreground space-y-1 mb-3 pt-1 border-t border-border">
 											<p>
-												<span className="text-foreground/70">from</span> {email.from}
+												<span className="text-foreground/70">From:</span> {email.from}
 											</p>
 											<p>
-												<span className="text-foreground/70">to</span> {email.to}
+												<span className="text-foreground/70">To:</span> {email.to}
 											</p>
 										</div>
-										<div className="text-sm leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto">
-											{email.text || (
+										<div className="max-h-64 overflow-y-auto text-sm leading-relaxed">
+											{email.html && typeof window !== "undefined" ? (
+												<div
+													className="email-html prose prose-sm dark:prose-invert max-w-none wrap-break-word"
+													dangerouslySetInnerHTML={{
+														__html: DOMPurify.sanitize(email.html, {
+															USE_PROFILES: { html: true },
+														}),
+													}}
+												/>
+											) : email.text ? (
+												<div className="whitespace-pre-wrap">{email.text}</div>
+											) : (
 												<span className="text-muted-foreground">No content</span>
 											)}
 										</div>

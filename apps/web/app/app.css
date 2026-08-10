@@ -210,3 +210,19 @@ body {
 ::-webkit-scrollbar-track {
 	background-color: var(--secondary);
 }
+
+.email-html img {
+	max-width: 100%;
+	height: auto;
+}
+
+.email-html a {
+	color: hsl(var(--primary));
+	text-decoration: underline;
+}
+
+.email-html table {
+	max-width: 100%;
+	overflow-x: auto;
+	display: block;
+}
