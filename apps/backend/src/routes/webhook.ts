@@ -3,6 +3,7 @@ import { simpleParser } from "mailparser";
 import { cache } from "~/lib/cache";
 import { EmailService } from "~/services/email.service";
 import { ApiError } from "~/utils/ApiError";
+import { scanEmailSafety } from "~/utils/EmailSafety";
 
 interface WebhookPayload {
 	from: string;
@@ -40,9 +41,14 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
 
 		const links = extractLinks([text, html, raw].filter(Boolean).join(" "));
 
-		// MVP risk scoring
-		const riskScore = 0;
-		const riskLevel = "safe" as const;
+		const safety = scanEmailSafety({
+			from: parsed.from?.text || from,
+			to,
+			subject: parsed.subject || subject || "(no subject)",
+			text,
+			html,
+			links,
+		});
 
 		const email = await EmailService.store(sessionId, {
 			from: parsed.from?.text || from,
@@ -51,8 +57,8 @@ export const webhookRoutes: FastifyPluginAsync = async (fastify) => {
 			text: text || stripHtml(html || ""),
 			html,
 			links,
-			riskScore,
-			riskLevel,
+			riskScore: safety.riskScore,
+			riskLevel: safety.riskLevel,
 		});
 
 		return reply.success({ stored: true, emailId: email.id });

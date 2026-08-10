@@ -40,7 +40,6 @@ export async function server(fastify: FastifyInstance) {
 
 	await fastify.register(sessionPlugin);
 
-	// await fastify.register(emailRoutes, { prefix: "/api/email" });
 	await fastify.register(sessionRoutes, { prefix: "/api/session" });
 	await fastify.register(emailRoutes, { prefix: "/api/emails" });
 	await fastify.register(webhookRoutes, { prefix: "/api/webhook" });
