@@ -1,10 +1,8 @@
-import { useState } from "react";
-import { RefreshCw, Inbox, Copy, Check, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { useState, useEffect } from "react";
+import { RefreshCw, Inbox, Copy, Check, ShieldCheck, ShieldAlert, ShieldX, Clock } from "lucide-react";
 import useSession from "~/hooks/useSession";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Card, CardContent } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
 import { createApiClientFromRequest } from "~/api/client";
 import type { LoaderFunctionArgs } from "react-router";
@@ -22,6 +20,33 @@ export default function Home() {
 	const { emailsData } = useLoaderData<typeof loader>();
 	const emails = emailsData.emails ?? [];
 	const emailAddress = session?.email;
+
+	const [timeLeft, setTimeLeft] = useState<number>(0);
+
+	useEffect(() => {
+		if (!session?.expiresAt) return;
+
+		const updateTimer = () => {
+			const now = Date.now();
+			const diffInSeconds = Math.max(0, Math.floor((session.expiresAt - now) / 1000));
+			setTimeLeft(diffInSeconds);
+
+			if (diffInSeconds === 0 && typeof window !== "undefined") {
+				window.location.reload();
+			}
+		};
+
+		updateTimer();
+		const interval = setInterval(updateTimer, 1000);
+
+		return () => clearInterval(interval);
+	}, [session?.expiresAt]);
+
+	const formatCountdown = (seconds: number) => {
+		const mins = Math.floor(seconds / 60);
+		const secs = seconds % 60;
+		return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+	};
 
 	const handleCopy = () => {
 		if (!emailAddress) return;
@@ -43,33 +68,24 @@ export default function Home() {
 		switch (level) {
 			case "safe":
 				return (
-					<Badge
-						variant="outline"
-						className="flex items-center justify-center text-emerald-500 border-emerald-500/30 bg-emerald-500/10 gap-1 font-normal text-[11px] py-0 px-2"
-					>
+					<span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
 						<ShieldCheck className="w-3 h-3" />
-						<span>Safe</span>
-					</Badge>
+						safe
+					</span>
 				);
 			case "warning":
 				return (
-					<Badge
-						variant="outline"
-						className="flex items-center justify-center text-amber-500 border-amber-500/30 bg-amber-500/10 gap-1 font-normal text-[11px] py-0 px-2"
-					>
+					<span className="inline-flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
 						<ShieldAlert className="w-3 h-3" />
-						<span>Suspicious</span>
-					</Badge>
+						suspicious
+					</span>
 				);
 			case "dangerous":
 				return (
-					<Badge
-						variant="outline"
-						className="flex items-center justify-center text-destructive border-destructive/30 bg-destructive/10 gap-1 font-normal text-[11px] py-0 px-2"
-					>
+					<span className="inline-flex items-center gap-1 text-[11px] text-red-600 dark:text-red-400">
 						<ShieldX className="w-3 h-3" />
-						<span>Dangerous</span>
-					</Badge>
+						dangerous
+					</span>
 				);
 			default:
 				return null;
@@ -77,113 +93,127 @@ export default function Home() {
 	};
 
 	return (
-		<div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
-			<div className="w-full max-w-2xl space-y-8">
-				{/* <pre>{JSON.stringify(emails)}</pre>
-				---
-				<pre>{JSON.stringify(session)}</pre> */}
-				<div className="text-center space-y-2">
-					<div className="flex items-center justify-center gap-2">
-						<div className="w-8 h-8">
-							<img src="/logo.png" alt="Logo" className="w-8 h-8" />
-						</div>
-						<h1 className="text-3xl font-bold tracking-tight">BriefBox</h1>
+		<div className="min-h-screen bg-background text-foreground">
+			<div className="mx-auto max-w-lg px-4 py-10 sm:py-16">
+				{/* Header */}
+				<header className="mb-10">
+					<div className="flex items-center gap-2 mb-1">
+						<img src="/logo.png" alt="" className="w-7 h-7" />
+						<h1 className="text-2xl font-bold tracking-tight">BriefBox</h1>
 					</div>
-					<p className="text-muted-foreground text-sm">
-						Disposable temporary email for instant privacy.
-					</p>
-				</div>
-				<Card className="rounded-2xl p-4 shadow-xl">
-					<CardContent className="p-0">
-						<div className="flex flex-col sm:flex-row items-center gap-2">
-							<div className="relative w-full">
-								<Input type="text" readOnly value={emailAddress ?? "Loading..."} />
-								<div>
-									<Button
-										type="button"
-										size="icon-sm"
-										variant="ghost"
-										onClick={handleCopy}
-										className="absolute right-1.5 top-1/2 -translate-y-1/2"
-									>
-										{copied ? <Check className="text-primary" /> : <Copy />}
-									</Button>
-								</div>
-							</div>
+					<p className="text-sm text-muted-foreground">Temporary email. Dies in one hour.</p>
+				</header>
 
-							<Button onClick={handleRefresh} className="w-full sm:w-auto group">
-								<RefreshCw className="w-4 h-4 group-hover:rotate-45 transition-transform duration-150 ease-in" />
-								Refresh
-							</Button>
+				{/* Address */}
+				<section className="mb-8">
+					<label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+						Your address
+					</label>
+					<div className="flex gap-2">
+						<div className="relative flex-1">
+							<Input
+								type="text"
+								readOnly
+								value={emailAddress ?? "…"}
+								className="font-mono text-sm h-10 pr-10"
+							/>
+							<button
+								type="button"
+								onClick={handleCopy}
+								className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+								aria-label="Copy"
+							>
+								{copied ? (
+									<Check className="w-4 h-4 text-emerald-500" />
+								) : (
+									<Copy className="w-4 h-4" />
+								)}
+							</button>
 						</div>
-					</CardContent>
-				</Card>
-				<Card className="rounded-2xl min-h-75 flex flex-col justify-center items-center">
-					<CardContent className="w-full p-6 my-auto flex flex-col justify-center items-center">
-						{emails.length === 0 ? (
-							<div className="space-y-3 max-w-sm text-center">
-								<div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center text-muted-foreground border border-border">
-									<Inbox className="w-6 h-6" />
-								</div>
-								<h3 className="text-base font-semibold text-foreground">
-									Your inbox is empty
-								</h3>
-								<p className="text-xs text-muted-foreground leading-relaxed">
-									Waiting for incoming emails. Any messages sent to your temp address will
-									show up here automatically.
-								</p>
-							</div>
-						) : (
-							<Accordion multiple={false} className="w-full space-y-2">
-								{emails.map((email: any) => (
-									<AccordionItem
-										key={email.id}
-										value={email.id}
-										className="border border-border rounded-xl px-4 py-1 transition-colors hover:bg-muted/30"
-									>
-										<AccordionTrigger className="hover:no-underline py-3">
-											<div className="flex items-center gap-3 text-left w-full pr-2 overflow-hidden">
-												<div className="flex-1 min-w-0">
-													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-semibold truncate text-foreground">
-															{email.subject || "(No Subject)"}
-														</p>
-														<span className="text-[10px] text-muted-foreground shrink-0 font-mono">
-															{formatTimestamp(email.receivedAt)}
-														</span>
-													</div>
-													<div className="flex items-center gap-2 mt-0.5">
-														<p className="text-xs text-muted-foreground truncate">
-															{email.from}
-														</p>
-														{renderRiskBadge(email.riskLevel)}
-													</div>
-												</div>
+						<Button
+							variant="outline"
+							size="icon"
+							onClick={handleRefresh}
+							className="h-10 w-10 shrink-0"
+						>
+							<RefreshCw className="w-4 h-4" />
+						</Button>
+					</div>
+
+					{session?.expiresAt && (
+						<div className="mt-3 flex items-center gap-2 text-sm">
+							<Clock className="w-3.5 h-3.5 text-muted-foreground" />
+							<span className="text-muted-foreground">Expires in</span>
+							<span className="font-mono font-medium tabular-nums">
+								{formatCountdown(timeLeft)}
+							</span>
+						</div>
+					)}
+				</section>
+
+				{/* Inbox */}
+				<section>
+					<div className="flex items-baseline gap-1 mb-3">
+						<h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+							Inbox
+						</h2>
+						<span className="text-xs text-muted-foreground">({emails.length || 0})</span>
+					</div>
+
+					{emails.length === 0 ? (
+						<div className="border border-dashed border-border rounded-lg py-14 text-center">
+							<Inbox className="w-5 h-5 text-muted-foreground mx-auto mb-3" />
+							<p className="text-sm text-muted-foreground">No messages yet</p>
+						</div>
+					) : (
+						<Accordion
+							multiple={false}
+							className="border border-border rounded-lg divide-y divide-border overflow-hidden"
+						>
+							{emails.map((email) => (
+								<AccordionItem key={email.id} value={email.id} className="border-0 px-0">
+									<AccordionTrigger className="hover:no-underline px-4 py-3 hover:bg-muted/40 transition-colors">
+										<div className="flex flex-col gap-0.5 text-left w-full min-w-0 pr-2">
+											<div className="flex items-center justify-between gap-3">
+												<span className="text-sm font-medium truncate">
+													{email.subject || "(No Subject)"}
+												</span>
+												<span className="text-[11px] text-muted-foreground font-mono shrink-0">
+													{formatTimestamp(email.receivedAt)}
+												</span>
 											</div>
-										</AccordionTrigger>
-										<AccordionContent className="pt-2 pb-4 border-t border-border mt-2 space-y-4">
-											<div className="bg-muted/40 p-3 rounded-lg text-xs">
-												<p className="text-muted-foreground">
-													<span className="font-semibold text-foreground">
-														From:
-													</span>{" "}
+											<div className="flex items-center gap-2">
+												<span className="text-xs text-muted-foreground truncate">
 													{email.from}
-												</p>
-												<p className="text-muted-foreground">
-													<span className="font-semibold text-foreground">To:</span>{" "}
-													{email.to}
-												</p>
+												</span>
+												{renderRiskBadge(email.riskLevel)}
 											</div>
-											<div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed font-sans px-1">
-												{email.text}
-											</div>
-										</AccordionContent>
-									</AccordionItem>
-								))}
-							</Accordion>
-						)}
-					</CardContent>
-				</Card>
+										</div>
+									</AccordionTrigger>
+									<AccordionContent className="px-4 pb-4">
+										<div className="text-xs text-muted-foreground space-y-1 mb-3 pt-1 border-t border-border">
+											<p>
+												<span className="text-foreground/70">from</span> {email.from}
+											</p>
+											<p>
+												<span className="text-foreground/70">to</span> {email.to}
+											</p>
+										</div>
+										<div className="text-sm leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto">
+											{email.text || (
+												<span className="text-muted-foreground">No content</span>
+											)}
+										</div>
+									</AccordionContent>
+								</AccordionItem>
+							))}
+						</Accordion>
+					)}
+				</section>
+
+				<p className="mt-10 text-center text-[11px] text-muted-foreground">
+					Everything disappears when the timer ends.
+				</p>
 			</div>
 		</div>
 	);

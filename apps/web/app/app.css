@@ -197,3 +197,16 @@ body {
 		@apply bg-background text-foreground scroll-smooth;
 	}
 }
+
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: var(--primary);
+}
+
+::-webkit-scrollbar-track {
+	background-color: var(--secondary);
+}
