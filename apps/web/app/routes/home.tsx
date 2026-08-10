@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/
 import { createApiClientFromRequest } from "~/api/client";
 import type { LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
+import { useRevalidator } from "react-router";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const api = createApiClientFromRequest(request);
@@ -16,6 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function Home() {
 	const { session } = useSession();
+	const revalidator = useRevalidator();
 	const [copied, setCopied] = useState(false);
 	const { emailsData } = useLoaderData<typeof loader>();
 	const emails = emailsData.emails ?? [];
@@ -42,6 +44,18 @@ export default function Home() {
 		return () => clearInterval(interval);
 	}, [session?.expiresAt]);
 
+	useEffect(() => {
+		const id = setInterval(() => {
+			if (document.hidden) return;
+			if (revalidator.state === "loading") return;
+			revalidator.revalidate();
+		}, 10000);
+
+		return () => clearInterval(id);
+	}, [revalidator]);
+
+	const isRefreshing = revalidator.state === "loading";
+
 	const formatCountdown = (seconds: number) => {
 		const mins = Math.floor(seconds / 60);
 		const secs = seconds % 60;
@@ -56,7 +70,7 @@ export default function Home() {
 	};
 
 	const handleRefresh = () => {
-		if (typeof window !== "undefined") window.location.reload();
+		if (typeof window !== "undefined") revalidator.revalidate();
 	};
 
 	const formatTimestamp = (ts: number) => {
@@ -134,9 +148,12 @@ export default function Home() {
 							variant="outline"
 							size="icon"
 							onClick={handleRefresh}
+							disabled={isRefreshing}
 							className="h-10 w-10 shrink-0"
 						>
-							<RefreshCw className="w-4 h-4" />
+							<RefreshCw
+								className={`w-4 h-4 ${isRefreshing ? "animate-spin animation-duration-[700ms]" : ""}`}
+							/>
 						</Button>
 					</div>
 
