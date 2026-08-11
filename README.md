@@ -15,6 +15,10 @@
 
 BriefBox gives every visitor a throwaway inbox that self-destructs automatically. Incoming mail is scanned for phishing and scam signals before it appears in the UI.
 
+<p align="center">
+  <img src="assets/home.png" alt="BriefBox" />
+</p>
+
 ---
 
 ## Features
